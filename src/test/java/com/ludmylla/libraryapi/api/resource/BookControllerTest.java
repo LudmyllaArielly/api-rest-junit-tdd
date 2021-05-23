@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ludmylla.libraryapi.api.dto.BookDTO;
 import com.ludmylla.libraryapi.model.entity.Book;
 import com.ludmylla.libraryapi.services.BookService;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,7 +89,19 @@ public class BookControllerTest {
 
     @Test
     @DisplayName("Should throw a validation error, when there is not enough data to create the book")
-    public void createInvalidBookTest(){
+    public void createInvalidBookTest() throws  Exception{
+
+        String json = new ObjectMapper().writeValueAsString(new BookDTO());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post(BOOK_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json);
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("errors", Matchers.hasSize(3)));
 
     }
 }
