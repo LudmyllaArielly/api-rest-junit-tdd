@@ -2,6 +2,7 @@ package com.ludmylla.libraryapi.api.resource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ludmylla.libraryapi.api.dto.BookDTO;
+import com.ludmylla.libraryapi.exceptions.BusinessException;
 import com.ludmylla.libraryapi.model.entity.Book;
 import com.ludmylla.libraryapi.services.BookService;
 import org.hamcrest.Matcher;
@@ -46,11 +47,7 @@ public class BookControllerTest {
     @DisplayName("Create a book successfully")
     public void createBookTest() throws Exception {
 
-        BookDTO dto = BookDTO
-                .builder()
-                .author("Arthur")
-                .title("As aventuras")
-                .isbn("123456").build();
+        BookDTO dto = createNewBook();
 
         //  Quando for salvar, não será salvo omo dto mas sim
         // com a entidade livro
@@ -104,4 +101,36 @@ public class BookControllerTest {
                 .andExpect(jsonPath("errors", Matchers.hasSize(3)));
 
     }
+
+    @Test
+    @DisplayName("Should throw a validation error when registering the book with isbn that already exists")
+    public void createBootWithDuplicateIsbn() throws  Exception{
+
+        BookDTO book = createNewBook();
+        String json = new ObjectMapper().writeValueAsString(book);
+        String messageError = "Isbn already exists";
+        BDDMockito.given(service.save(Mockito.any(Book.class)))
+                .willThrow(new BusinessException(messageError));
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post(BOOK_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json);
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("errors", Matchers.hasSize(1)))
+                .andExpect(jsonPath("errors[0]").value(messageError));
+
+    }
+
+    private BookDTO createNewBook() {
+        return BookDTO
+                .builder()
+                .author("Arthur")
+                .title("As aventuras")
+                .isbn("123456").build();
+    }
+
 }

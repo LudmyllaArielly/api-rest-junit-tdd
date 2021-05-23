@@ -1,9 +1,11 @@
 package com.ludmylla.libraryapi.service;
 
+import com.ludmylla.libraryapi.exceptions.BusinessException;
 import com.ludmylla.libraryapi.model.entity.Book;
 import com.ludmylla.libraryapi.model.repositories.BookRepository;
 import com.ludmylla.libraryapi.services.BookService;
 import com.ludmylla.libraryapi.services.impl.BookServiceImpl;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,10 +36,7 @@ public class BookServiceTest {
     @DisplayName("Should save a book")
     public void saveBookTest(){
         // Cenário
-        Book book = Book.builder()
-                .author("Maria")
-                .title("Secreto")
-                .isbn("123").build();
+        Book book = createNewBook();
 
         // Execução
         Mockito.when(bookRepository.save(book)).thenReturn(Book.builder()
@@ -55,10 +54,29 @@ public class BookServiceTest {
 
     }
 
-    @Test
-    @DisplayName("Should initiate a validation error, when there is not enough data to create the book")
-    public void createInvalidBookTest(){
+    private Book createNewBook () {
+        return Book.builder()
+                .author("Maria")
+                .title("Secreto")
+                .isbn("123").build();
+    }
 
+    @Test
+    @DisplayName("Should generate a exception error when trying to register a book with duplicate isbn")
+    public void shouldNotSaveABookWithDuplicatedIsbn(){
+        // Cenário
+        Book book = createNewBook();
+        Mockito.when(bookRepository.existsByIsbn(Mockito.anyString())).thenReturn(true);
+        
+        // Execução
+        Throwable exception = Assertions.catchThrowable(() -> service.save(book));
+
+        // Verificações
+        assertThat(exception).isInstanceOf(BusinessException.class)
+                .hasMessage("Isbn already exists");
+
+        // Verificando que nunca pode chamar o método salvar
+        Mockito.verify(bookRepository, Mockito.never()).save(book);
 
     }
 

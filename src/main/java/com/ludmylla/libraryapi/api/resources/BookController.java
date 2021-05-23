@@ -2,6 +2,7 @@ package com.ludmylla.libraryapi.api.resources;
 
 import com.ludmylla.libraryapi.api.dto.BookDTO;
 import com.ludmylla.libraryapi.exceptions.ApiErros;
+import com.ludmylla.libraryapi.exceptions.BusinessException;
 import com.ludmylla.libraryapi.model.entity.Book;
 import com.ludmylla.libraryapi.services.BookService;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +44,11 @@ public class BookController {
         BindingResult bindResult = ex.getBindingResult();
         return new ApiErros(bindResult);
 
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(BAD_REQUEST)
+    public ApiErros handlerBusinessException(BusinessException ex){
+        return new ApiErros(ex);
     }
 }
